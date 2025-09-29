@@ -9,7 +9,7 @@ const storageRoutes = require('./routes/storageRoutes'); // This will now receiv
 
 // Load .env variables
 dotenv.config();
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const corsOrigin = process.env.CORS_ORIGIN;
 
 // Initialize app
 const app = express();
