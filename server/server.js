@@ -2,18 +2,37 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const userRoutes = require('./routes/userRoutes');
 const storageRoutes = require('./routes/storageRoutes'); // This will now receive `gfsBucket` directly
 
 // Load .env variables
 dotenv.config();
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 // Initialize app
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json()); // Parse JSON bodies (still needed for other routes)
+// Security middleware
+app.use(helmet()); // Sets various HTTP headers for security
+app.use(cors({
+  origin: corsOrigin, // Restrict to frontend origin
+  credentials: true
+}));
+
+// Rate limiting to prevent brute force attacks
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', apiLimiter);
+
+app.use(express.json({ limit: '10mb' })); // Limit request body size
+app.disable('x-powered-by'); // Hide Express
 
 // MongoDB Connection
 let GridFSBucket; // For the newer GridFS API
